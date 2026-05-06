@@ -1,0 +1,175 @@
+{
+    "schedule_time": "00:00",
+    "time_range_mode": "fixed_day",
+    "prometheus": {
+        "url": "http://prometheus:9090",
+        "extra_label_filters": {}
+    },
+    "output": {
+        "prov_id": "省份编号",
+        "data_type": "token_info",
+        "protocol": "0",
+        "local_data_dir": "./data_files"
+    },
+    "sftp": {
+        "enabled": true,
+        "host": "192.168.1.100",
+        "port": 22,
+        "username": "upload_user",
+        "password": "",
+        "private_key_path": "",
+        "remote_dir": "/data/upload/token_info",
+        "timeout": 30
+    },
+    "default_engine": "vllm",
+    "metrics_presets": {
+        "vllm": {
+            "request_total": "vllm:request_success_total",
+            "request_success": "vllm:request_success_total",
+            "tokens_total": "vllm:prompt_tokens_total",
+            "generation_tokens": "vllm:generation_tokens_total",
+            "model_label": "model_name"
+        },
+        "mindie": {
+            "request_total": "request_received_total",
+            "request_success": "request_success_total",
+            "tokens_total": "prompt_tokens_total",
+            "generation_tokens": "generation_tokens_total",
+            "model_label": "model_name"
+        },
+        "others": {
+            "request_total": "others_request_success_total",
+            "request_success": "others_request_success_total",
+            "tokens_total": "others_prompt_tokens_total",
+            "generation_tokens": "others_generation_tokens_total",
+            "model_label": "model_name"
+        }
+    },
+    "metrics_optional": {
+        "request_success": false,
+        "generation_tokens": false
+    },
+    "models": [
+        {
+            "name": "Qwen-30B",
+            "label_match": "Qwen-30B",
+            "model_type": 1,
+            "modle_size": 30.0,
+            "quant_level": 6,
+            "hardware_type": "A10",
+            "department": "部门名称",
+            "use_case": "通用对话",
+            "iternal_app": "1"
+        },
+        {
+            "name": "Qwen-32B",
+            "label_match": [
+                "Qwen-32B"
+            ],
+            "model_type": 1,
+            "modle_size": 32.0,
+            "quant_level": 6,
+            "hardware_type": "A10",
+            "department": "部门名称",
+            "use_case": "通用对话",
+            "engine": "vllm",
+            "iternal_app": "1"
+        },
+        {
+            "name": "Qwen-8B",
+            "label_match": "Qwen-Fast",
+            "model_type": 1,
+            "modle_size": 8.0,
+            "quant_level": 6,
+            "hardware_type": "A10",
+            "department": "部门名称",
+            "use_case": "通用对话",
+            "engine": "vllm",
+            "iternal_app": "1"
+        },
+        {
+            "name": "Qwen-32B-Long",
+            "label_match": "Qwen-32B-Long",
+            "model_type": 1,
+            "modle_size": 32.0,
+            "quant_level": 6,
+            "hardware_type": "A10",
+            "department": "部门名称",
+            "use_case": "通用对话",
+            "engine": "vllm",
+            "iternal_app": "1"
+        },
+        {
+            "name": "qwen2.5-32B",
+            "label_match": "qwen2.5-32B",
+            "model_type": 1,
+            "modle_size": 32.0,
+            "quant_level": 6,
+            "hardware_type": "A10",
+            "department": "部门名称",
+            "use_case": "通用对话",
+            "engine": "vllm",
+            "iternal_app": "1"
+        },
+        {
+            "name": "Qwen3-32B",
+            "label_match": "Qwen3-32B",
+            "model_type": 1,
+            "modle_size": 32.0,
+            "quant_level": 6,
+            "hardware_type": "A10",
+            "department": "部门名称",
+            "use_case": "通用对话",
+            "engine": "vllm",
+            "iternal_app": "1"
+        },
+        {
+            "name": "Qwen2.5VL-7B",
+            "label_match": "qwen2-7B-VL",
+            "model_type": 1,
+            "modle_size": 7.0,
+            "quant_level": 3,
+            "hardware_type": "A10",
+            "department": "部门名称",
+            "use_case": "多模态对话",
+            "engine": "vllm",
+            "iternal_app": "1"
+        },
+        {
+            "name": "Qwen2.5VL-32B",
+            "label_match": "Qwen-32B-CRM-PRO",
+            "model_type": 1,
+            "modle_size": 32.0,
+            "quant_level": 6,
+            "hardware_type": "A10",
+            "department": "部门名称",
+            "use_case": "多模态对话",
+            "engine": "vllm",
+            "iternal_app": "1"
+        },
+        {
+            "name": "QwQ-32B",
+            "label_match": "QwQ-AWQ",
+            "model_type": 1,
+            "modle_size": 32.0,
+            "quant_level": 6,
+            "hardware_type": "A10",
+            "department": "部门名称",
+            "use_case": "多模态对话",
+            "engine": "vllm",
+            "iternal_app": "1"
+        },
+        {
+            "name": "Deepseek-R1",
+            "label_match": "deepseek-r1",
+            "model_type": 1,
+            "modle_size": 671.0,
+            "quant_level": 5,
+            "hardware_type": "910B",
+            "department": "部门名称",
+            "use_case": "通用对话",
+            "engine": "mindie",
+            "iternal_app": "1"
+        }
+    ]
+}

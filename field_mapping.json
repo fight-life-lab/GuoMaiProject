@@ -1,0 +1,359 @@
+{
+  "table_name": "AIP_MDL_TOKEN_INFO",
+  "table_comment": "Tokens信息和调用统计",
+  "fields": [
+    {
+      "seq": 1,
+      "name_cn": "AI应用业务归属单位标识",
+      "name_en": "APP_OWNER_ORG",
+      "data_type": "VARCHAR2(30)",
+      "nullable": false,
+      "validation": {
+        "rule": "IN",
+        "values": ["主数据全集"],
+        "description": "必须在主数据编码内，不能为其他"
+      },
+      "source_mapping": {
+        "one_api_field": "",
+        "default_value": "SFZXB",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 2,
+      "name_cn": "AI应用业务归属具体处室/部门",
+      "name_en": "APP_OWNER_DEPARTMENT",
+      "data_type": "VARCHAR2(50)",
+      "nullable": true,
+      "validation": {
+        "rule": "NOT_NUMBER_OR_ENGLISH_ONLY",
+        "description": "不是数字、全英文字符串、空白"
+      },
+      "source_mapping": {
+        "one_api_field": "",
+        "default_value": "",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 3,
+      "name_cn": "模型部署单位标识",
+      "name_en": "MODEL_DEPLOY_ORG",
+      "data_type": "VARCHAR2(50)",
+      "nullable": false,
+      "validation": {
+        "rule": "IN",
+        "values": ["主数据全集"],
+        "description": "必须在主数据编码内，不能为其他"
+      },
+      "source_mapping": {
+        "one_api_field": "",
+        "default_value": "SFZXB",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 4,
+      "name_cn": "模型部署具体处室/部门",
+      "name_en": "MODEL_DEPLOY_DEPARTMENT",
+      "data_type": "VARCHAR2(100)",
+      "nullable": true,
+      "validation": {
+        "rule": "NOT_NUMBER_OR_ENGLISH_ONLY",
+        "description": "不是数字、全英文字符串、空白"
+      },
+      "source_mapping": {
+        "one_api_field": "",
+        "default_value": "",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 5,
+      "name_cn": "模型编码",
+      "name_en": "MODEL_CODE",
+      "data_type": "VARCHAR2(100)",
+      "nullable": false,
+      "is_primary_key": true,
+      "validation": {
+        "rule": "FORMAT",
+        "pattern": "^[A-Z0-9]+_[A-Z0-9]+_[A-Z0-9]+_\\d{6}$",
+        "description": "格式：模型部署单位标识_模型品牌_模型参数量_序号（6位数字），全部大写"
+      },
+      "source_mapping": {
+        "one_api_field": "model_name",
+        "default_value": "",
+        "transform": "generate_model_code(model_name)"
+      }
+    },
+    {
+      "seq": 6,
+      "name_cn": "模型名称",
+      "name_en": "MODEL_NAME",
+      "data_type": "VARCHAR2(100)",
+      "nullable": false,
+      "validation": {
+        "rule": "NOT_CHINESE_OR_NUMBER_ONLY",
+        "description": "不是汉字、纯数字、空白"
+      },
+      "source_mapping": {
+        "one_api_field": "model_name",
+        "default_value": "",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 7,
+      "name_cn": "应用编码",
+      "name_en": "APP_ID",
+      "data_type": "VARCHAR2(36)",
+      "nullable": false,
+      "is_primary_key": true,
+      "validation": {
+        "rule": "FORMAT",
+        "pattern": "^[A-Z0-9]+_[A-Z0-9]+_\\d{6}$",
+        "description": "格式：AI应用业务归属单位标识_AI应用图谱编码_序号（6位数字），全部大写"
+      },
+      "source_mapping": {
+        "one_api_field": "",
+        "default_value": "SFZXB_ZNYY0001_000001",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 8,
+      "name_cn": "应用名称",
+      "name_en": "APP_NAME",
+      "data_type": "VARCHAR2(100)",
+      "nullable": false,
+      "validation": {
+        "rule": "NOT_NUMBER_OR_ENGLISH_ONLY",
+        "description": "不是数字、全英文字符串、空白"
+      },
+      "source_mapping": {
+        "one_api_field": "",
+        "default_value": "通用对话",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 9,
+      "name_cn": "是否内部应用",
+      "name_en": "ITERNAL_APP",
+      "data_type": "VARCHAR2(2)",
+      "nullable": false,
+      "validation": {
+        "rule": "IN",
+        "values": ["0", "1"],
+        "description": "1:是，0：否"
+      },
+      "source_mapping": {
+        "one_api_field": "",
+        "default_value": "1",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 10,
+      "name_cn": "模型品牌",
+      "name_en": "MODEL_BRAND",
+      "data_type": "VARCHAR2(50)",
+      "nullable": false,
+      "validation": {
+        "rule": "UPPERCASE_ONLY",
+        "description": "全部为大写字母，例如QWEN、DEEPSEEK、TELECHAT"
+      },
+      "source_mapping": {
+        "one_api_field": "model_name",
+        "default_value": "",
+        "transform": "extract_brand(model_name)"
+      }
+    },
+    {
+      "seq": 11,
+      "name_cn": "模型参数量",
+      "name_en": "MODEL_SIZE",
+      "data_type": "DECIMAL(20,2)",
+      "nullable": false,
+      "validation": {
+        "rule": "NUMBER",
+        "description": "仅填写数值，单位为B (十亿)"
+      },
+      "source_mapping": {
+        "one_api_field": "model_name",
+        "default_value": "",
+        "transform": "extract_size(model_name)"
+      }
+    },
+    {
+      "seq": 12,
+      "name_cn": "模型类型",
+      "name_en": "MODEL_TYPE",
+      "data_type": "VARCHAR2(50)",
+      "nullable": false,
+      "validation": {
+        "rule": "IN",
+        "values": ["主数据全集"],
+        "description": "参见主数据模型类型编码"
+      },
+      "source_mapping": {
+        "one_api_field": "",
+        "default_value": "LLM",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 13,
+      "name_cn": "模型部署精度",
+      "name_en": "QUANT_LEVEL",
+      "data_type": "VARCHAR2(10)",
+      "nullable": false,
+      "validation": {
+        "rule": "IN",
+        "values": ["主数据全集"],
+        "description": "参见主数据模型部署精度编码"
+      },
+      "source_mapping": {
+        "one_api_field": "",
+        "default_value": "FP16",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 14,
+      "name_cn": "部署硬件类型",
+      "name_en": "HARDWARE_TYPE",
+      "data_type": "VARCHAR2(30)",
+      "nullable": false,
+      "validation": {
+        "rule": "NO_SPECIAL_CHARS",
+        "forbidden_chars": [":", ","],
+        "description": "无冒号、逗号等特殊字符"
+      },
+      "source_mapping": {
+        "one_api_field": "",
+        "default_value": "910B",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 15,
+      "name_cn": "模型调用次数",
+      "name_en": "TOTAL_CALL_COUNT",
+      "data_type": "DECIMAL(30)",
+      "nullable": false,
+      "validation": {
+        "rule": "NUMBER_GE_ZERO",
+        "description": "数字形式（≥0）"
+      },
+      "source_mapping": {
+        "one_api_field": "",
+        "default_value": "1",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 16,
+      "name_cn": "模型成功调用次数",
+      "name_en": "TOTAL_CALL_SUCCESS_COUNT",
+      "data_type": "DECIMAL(30)",
+      "nullable": false,
+      "validation": {
+        "rule": "NUMBER_GE_ZERO",
+        "description": "数字形式（≥0）"
+      },
+      "source_mapping": {
+        "one_api_field": "",
+        "default_value": "1",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 17,
+      "name_cn": "模型输入Tokens消耗",
+      "name_en": "INPUT_TOKEN_COUNT",
+      "data_type": "DECIMAL(30)",
+      "nullable": false,
+      "validation": {
+        "rule": "NUMBER_GE_ZERO",
+        "description": "数字形式（≥0）"
+      },
+      "source_mapping": {
+        "one_api_field": "prompt_tokens",
+        "default_value": "0",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 18,
+      "name_cn": "模型输出Tokens消耗",
+      "name_en": "OUTPUT_TOKEN_COUNT",
+      "data_type": "DECIMAL(30)",
+      "nullable": false,
+      "validation": {
+        "rule": "NUMBER_GE_ZERO",
+        "description": "数字形式（≥0）"
+      },
+      "source_mapping": {
+        "one_api_field": "completion_tokens",
+        "default_value": "0",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 19,
+      "name_cn": "模型Thinking Tokens消耗",
+      "name_en": "REASONING_TOKEN_COUNT",
+      "data_type": "DECIMAL(30)",
+      "nullable": true,
+      "validation": {
+        "rule": "NUMBER_GE_ZERO",
+        "description": "数字形式（≥0）"
+      },
+      "source_mapping": {
+        "one_api_field": "",
+        "default_value": "0",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 20,
+      "name_cn": "模型总Tokens消耗",
+      "name_en": "TOTAL_TOKEN_COUNT",
+      "data_type": "DECIMAL(30)",
+      "nullable": false,
+      "validation": {
+        "rule": "NUMBER_GE_ZERO",
+        "description": "数字形式（≥0）"
+      },
+      "source_mapping": {
+        "one_api_field": "quota",
+        "default_value": "0",
+        "transform": ""
+      }
+    },
+    {
+      "seq": 21,
+      "name_cn": "备注",
+      "name_en": "REMARK",
+      "data_type": "VARCHAR2(2000)",
+      "nullable": true,
+      "validation": {
+        "rule": "ANY",
+        "description": "备注信息"
+      },
+      "source_mapping": {
+        "one_api_field": "",
+        "default_value": "",
+        "transform": ""
+      }
+    }
+  ],
+  "primary_keys": ["MODEL_CODE", "APP_ID"],
+  "file_format": {
+    "encoding": "UTF-8",
+    "field_separator": "0x05",
+    "record_separator": "0x0D0A",
+    "compression": "gzip"
+  }
+}
