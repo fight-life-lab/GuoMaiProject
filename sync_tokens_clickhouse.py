@@ -1,4 +1,12 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# @Author: Jingjing Shi
+# @Date: 2026/5/26 10:15
+# @Filename: sync_tokens_clickhouse.py
+# @Software: PyCharm
+# @Description: 
+#
+# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 One-API Token 数据同步脚本 - 从SQLite数据库获取数据
@@ -26,6 +34,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
+
 # import  datetime
 
 # 配置日志
@@ -45,115 +54,114 @@ logger = logging.getLogger(__name__)
 # 配置参数
 CONFIG = {
     'db_path': '/root/shijingjing/upload_tokens/one-api.db',  # 数据库路径
-    # 'output_dir': '/root/shijingjing/upload_tokens/data',
-    'output_dir':'/usr/token/data',
+    'output_dir': '/root/shijingjing/upload_tokens/data',
+    # 'output_dir': '/usr/token/data',
     'retention_days': 30,
     # API配置
     'api_base_url': 'http://119.96.25.23:5001',
     'api_token': 'one_api_600640',
     # 集团稽核系统配置
     'num_code': '10800',  # 数据发展中心编码  ???
-    'company_code':'GMGS',   # 公司代码
+    'company_code': 'GMGS',  # 公司代码
     'sub_system': 'YZPT',  # 系统名称
     'interface_code': 'AIP_MDL_TOKEN_INFO',
     'upload_batch': '00',  # 上传批次，首次为00  批次号
-    'file_seq': '0001', # 文件序列号
-    'quant_level':{ "FP32": '1',
-    "FP16": '2',
-    "BF16": '3',
-    "FP8": '4',
-    "INT8": '5',
-    "INT4": '6'},
-    'app_knowledge':{
-    "智能服务_面向客户_客服机器人": "ZNF0001",
-    "智能服务_面向一线_客服助理": "ZNF0002",
-    "智能服务_面向一线_客服管理": "ZNF0003",
-    "智能服务_面向一线_政支服务": "ZNF0004",
-    "智能服务_其他_其他": "ZNFW0000",
+    'file_seq': '0001',  # 文件序列号
+    'quant_level': {"FP32": '1',
+                    "FP16": '2',
+                    "BF16": '3',
+                    "FP8": '4',
+                    "INT8": '5',
+                    "INT4": '6'},
+    'app_knowledge': {
+        "智能服务_面向客户_客服机器人": "ZNF0001",
+        "智能服务_面向一线_客服助理": "ZNF0002",
+        "智能服务_面向一线_客服管理": "ZNF0003",
+        "智能服务_面向一线_政支服务": "ZNF0004",
+        "智能服务_其他_其他": "ZNFW0000",
 
-    "智能营销_个人及家庭业务_客户经营": "ZNYX0001",
-    "智能营销_个人及家庭业务_客户助理": "ZNYX0002",
-    "智能营销_个人及家庭业务_数字人直播": "ZNYX0003",
-    "智能营销_个人及家庭业务_销售助手": "ZNYX0004",
-    "智能营销_个人及家庭业务_门店运营": "ZNYX0008",
-    "智能营销_个人及家庭业务_活动策划": "ZNYX0009",
-    "智能营销_小微企业业务_销售助手": "ZNYX0005",
-    "智能营销_小微企业业务_营销策划": "ZNYX0006",
-    "智能营销_政企信息业务_产教解决方案": "ZNYX0007",
-    "智能营销_其他_其他": "ZNYX0000",
+        "智能营销_个人及家庭业务_客户经营": "ZNYX0001",
+        "智能营销_个人及家庭业务_客户助理": "ZNYX0002",
+        "智能营销_个人及家庭业务_数字人直播": "ZNYX0003",
+        "智能营销_个人及家庭业务_销售助手": "ZNYX0004",
+        "智能营销_个人及家庭业务_门店运营": "ZNYX0008",
+        "智能营销_个人及家庭业务_活动策划": "ZNYX0009",
+        "智能营销_小微企业业务_销售助手": "ZNYX0005",
+        "智能营销_小微企业业务_营销策划": "ZNYX0006",
+        "智能营销_政企信息业务_产教解决方案": "ZNYX0007",
+        "智能营销_其他_其他": "ZNYX0000",
 
-    "智能运营_云网运营_网络优化": "ZNYY0001",
-    "智能运营_云网运营_综合维护": "ZNYY0002",
-    "智能运营_云网运营_应急服务": "ZNYY0003",
-    "智能运营_云网运营_业务平台": "ZNYY0004",
-    "智能运营_云网运营_装维": "ZNYY0005",
-    "智能运营_云网运营_运维保障": "ZNYY0006",
-    "智能运营_云网运营_信息化平台": "ZNYY0007",
+        "智能运营_云网运营_网络优化": "ZNYY0001",
+        "智能运营_云网运营_综合维护": "ZNYY0002",
+        "智能运营_云网运营_应急服务": "ZNYY0003",
+        "智能运营_云网运营_业务平台": "ZNYY0004",
+        "智能运营_云网运营_装维": "ZNYY0005",
+        "智能运营_云网运营_运维保障": "ZNYY0006",
+        "智能运营_云网运营_信息化平台": "ZNYY0007",
 
-    "智能运营_数据运营_穿透式监管": "ZNYY0008",
-    "智能运营_数据运营_数据开发": "ZNYY0009",
-    "智能运营_安全运营_云网安全": "ZNYY0010",
-    "智能运营_安全运营_反诈": "ZNYY0011",
-    "智能运营_安全运营_数据与信息安全管理": "ZNYY0012",  # 修正：原表中序号27为“数据与信息安全”，归入“数据运营”下
-    "智能运营_其他_其他": "ZNYN0000",
+        "智能运营_数据运营_穿透式监管": "ZNYY0008",
+        "智能运营_数据运营_数据开发": "ZNYY0009",
+        "智能运营_安全运营_云网安全": "ZNYY0010",
+        "智能运营_安全运营_反诈": "ZNYY0011",
+        "智能运营_安全运营_数据与信息安全管理": "ZNYY0012",  # 修正：原表中序号27为“数据与信息安全”，归入“数据运营”下
+        "智能运营_其他_其他": "ZNYN0000",
 
-    "智能研发_科技创新_研发辅助": "ZNYF0001",
-    "智能研发_科技创新_专利辅助": "ZNYF0002",
-    "智能研发_其他_其他": "ZNYF0000",
+        "智能研发_科技创新_研发辅助": "ZNYF0001",
+        "智能研发_科技创新_专利辅助": "ZNYF0002",
+        "智能研发_其他_其他": "ZNYF0000",
 
-    "智能管理_审计_审计管理": "ZNGL0001",
-    "智能管理_财务_业务价值管理": "ZNGL0002",
-    "智能管理_财务_财务辅助": "ZNGL0003",
-    "智能管理_财务_财务风险管理": "ZNGL0004",
-    "智能管理_投资者关系_投关管理": "ZNGL0005",
-    "智能管理_投资者关系_上市合规": "ZNGL0006",
-    "智能管理_党群_党建工作": "ZNGL0007",
-    "智能管理_党群_宣传教育": "ZNGL0008",
-    "智能管理_云网发展_工程建设": "ZNGL0009",
-    "智能管理_云网发展_投资管理": "ZNGL0010",
-    "智能管理_共建共享_共享保障": "ZNGL0011",
-    "智能管理_共建共享_联合规建": "ZNGL0012",
-    "智能管理_法律_合同管理": "ZNGL0013",
-    "智能管理_法律_法律辅助": "ZNGL0014",
-    "智能管理_工会_员工关爱": "ZNGL0015",
-    "智能管理_工会_岗位创新": "ZNGL0034",  # 注意：序号47编码为ZNGL0034
-    "智能管理_巡视_巡视整改": "ZNGL0016",
-    "智能管理_人力_干部管理": "ZNGL0017",
-    "智能管理_人力_劳动管理": "ZNGL0018",
-    "智能管理_人力_员工培训": "ZNGL0019",
-    "智能管理_人力_薪酬福利": "ZNGL0020",
-    "智能管理_企业战略_改革推进": "ZNGL0021",
-    "智能管理_企业战略_公司治理": "ZNGL0022",
-    "智能管理_企业战略_战略规划": "ZNGL0035",
-    "智能管理_采购供应链_采购管理": "ZNGL0023",
-    "智能管理_采购供应链_物流管理": "ZNGL0024",
-    "智能管理_综合办公_办公助手": "ZNGL0025",
-    "智能管理_综合办公_规章制度": "ZNGL0026",
-    "智能管理_综合办公_新闻宣传": "ZNGL0027",
-    "智能管理_市场经营_渠道管理": "ZNGL0028",
-    "智能管理_市场经营_套餐价值管理": "ZNGL0029",
-    "智能管理_市场经营_业务经营分析": "ZNGL0030",
-    "智能管理_市场经营_业务合规管理": "ZNGL0031",
-    "智能管理_纪检_案管与审理": "ZNGL0032",
-    "智能管理_资本运营_资产管理": "ZNGL0033",
-    "智能管理_其他_其他": "ZNGL0000",
+        "智能管理_审计_审计管理": "ZNGL0001",
+        "智能管理_财务_业务价值管理": "ZNGL0002",
+        "智能管理_财务_财务辅助": "ZNGL0003",
+        "智能管理_财务_财务风险管理": "ZNGL0004",
+        "智能管理_投资者关系_投关管理": "ZNGL0005",
+        "智能管理_投资者关系_上市合规": "ZNGL0006",
+        "智能管理_党群_党建工作": "ZNGL0007",
+        "智能管理_党群_宣传教育": "ZNGL0008",
+        "智能管理_云网发展_工程建设": "ZNGL0009",
+        "智能管理_云网发展_投资管理": "ZNGL0010",
+        "智能管理_共建共享_共享保障": "ZNGL0011",
+        "智能管理_共建共享_联合规建": "ZNGL0012",
+        "智能管理_法律_合同管理": "ZNGL0013",
+        "智能管理_法律_法律辅助": "ZNGL0014",
+        "智能管理_工会_员工关爱": "ZNGL0015",
+        "智能管理_工会_岗位创新": "ZNGL0034",  # 注意：序号47编码为ZNGL0034
+        "智能管理_巡视_巡视整改": "ZNGL0016",
+        "智能管理_人力_干部管理": "ZNGL0017",
+        "智能管理_人力_劳动管理": "ZNGL0018",
+        "智能管理_人力_员工培训": "ZNGL0019",
+        "智能管理_人力_薪酬福利": "ZNGL0020",
+        "智能管理_企业战略_改革推进": "ZNGL0021",
+        "智能管理_企业战略_公司治理": "ZNGL0022",
+        "智能管理_企业战略_战略规划": "ZNGL0035",
+        "智能管理_采购供应链_采购管理": "ZNGL0023",
+        "智能管理_采购供应链_物流管理": "ZNGL0024",
+        "智能管理_综合办公_办公助手": "ZNGL0025",
+        "智能管理_综合办公_规章制度": "ZNGL0026",
+        "智能管理_综合办公_新闻宣传": "ZNGL0027",
+        "智能管理_市场经营_渠道管理": "ZNGL0028",
+        "智能管理_市场经营_套餐价值管理": "ZNGL0029",
+        "智能管理_市场经营_业务经营分析": "ZNGL0030",
+        "智能管理_市场经营_业务合规管理": "ZNGL0031",
+        "智能管理_纪检_案管与审理": "ZNGL0032",
+        "智能管理_资本运营_资产管理": "ZNGL0033",
+        "智能管理_其他_其他": "ZNGL0000",
 
-    "农业农村行业_农业农村行业_农业农村行业": "BGNY0000",
-    "住建行业_住建行业_住建行业": "BGZJ0000",
-    "文宣行业_文宣行业_文宣行业": "BGWX0000",
-    "工业制造行业_工业制造行业_工业制造行业": "BGGY0000",
-    "交通行业_交通行业_交通行业": "BGJT0000",
-    "教育行业_教育行业_教育行业": "BGJY0000",
-    "要客行业_要客行业_要客行业": "BGYK0000",
-    "金融行业_金融行业_金融行业": "BGJR0000",
-    "政务行业_政务行业_政务行业": "BGZW0000",
-    "能源化工行业_能源化工行业_能源化工行业": "BGHG0000",
-    "车联网行业_车联网行业_车联网行业": "BGCL0000",
-    "卫健行业_卫健行业_卫健行业": "BGWJ0000",
-    "应急行业_应急行业_应急行业": "BGYJ0000",
-    "政法公安行业_政法公安行业_政法公安行业": "BGZF0000"}
+        "农业农村行业_农业农村行业_农业农村行业": "BGNY0000",
+        "住建行业_住建行业_住建行业": "BGZJ0000",
+        "文宣行业_文宣行业_文宣行业": "BGWX0000",
+        "工业制造行业_工业制造行业_工业制造行业": "BGGY0000",
+        "交通行业_交通行业_交通行业": "BGJT0000",
+        "教育行业_教育行业_教育行业": "BGJY0000",
+        "要客行业_要客行业_要客行业": "BGYK0000",
+        "金融行业_金融行业_金融行业": "BGJR0000",
+        "政务行业_政务行业_政务行业": "BGZW0000",
+        "能源化工行业_能源化工行业_能源化工行业": "BGHG0000",
+        "车联网行业_车联网行业_车联网行业": "BGCL0000",
+        "卫健行业_卫健行业_卫健行业": "BGWJ0000",
+        "应急行业_应急行业_应急行业": "BGYJ0000",
+        "政法公安行业_政法公安行业_政法公安行业": "BGZF0000"}
 }
-
 
 # 字段分隔符 (0x05)
 FIELD_SEPARATOR = '0x05'
@@ -161,6 +169,7 @@ FIELD_SEPARATOR = '\x05'
 # 记录分隔符 (\r\n)
 # RECORD_SEPARATOR = '0x0D0A'
 RECORD_SEPARATOR = '\r\n'
+
 
 @dataclass
 class TokenLogRecord:
@@ -181,20 +190,21 @@ class TokenLogRecord:
     elapsed_time: int
     is_stream: bool
     system_prompt_reset: bool
-    app_department:str
-    app_name:str
-    brand_name:str
-    para_type:str
-    hardware:str
-    app_knowledge:str
+    app_department: str
+    app_name: str
+    brand_name: str
+    para_type: str
+    hardware: str
+    app_knowledge: str
+
 
 class APIQuerier:
     """API接口查询器"""
-    
+
     def __init__(self, base_url: str, token: str):
         self.base_url = base_url
         self.token = token
-    
+
     def get_daily_logs(self, target_date: str) -> List[TokenLogRecord]:
         """
         通过API获取指定日期的日志数据
@@ -206,28 +216,28 @@ class APIQuerier:
             'token': self.token,
             'date': target_date
         }
-        
+
         logger.info(f"通过API查询日期 {target_date} 的数据")
-        
+
         try:
             response = requests.get(url, params=params, timeout=60)
             response.raise_for_status()
             data = response.json()
-            
+
             if data.get('status') != 'success':
                 logger.error(f"API返回错误: {data}")
                 return []
-            
+
             logs = data.get('data', [])
             records = []
             logger.info(f"通过API查询到 {len(logs)} 条记录")
             for log in logs:
                 # 过滤测试失败的数据
                 content = log.get('content', '')
-                type  = log.get('type','')
+                type = log.get('type', '')
                 if '测试' in content:
                     continue
-                if type==5:
+                if type == 5:
                     continue
                 # print(log)
                 record = TokenLogRecord(
@@ -239,12 +249,12 @@ class APIQuerier:
                     username=log.get('username', ''),
                     token_name=log.get('token_name', ''),
                     model_name=log.get('model_name', ''),
-                    app_department=log.get('app_department',''),
-                    app_name=log.get('app_name',''),
-                    app_knowledge=log.get('lvl1_lvl2_lvl3',''),
-                    brand_name=log.get('brand_name',''),
-                    para_type=log.get('para_type',''),
-                    hardware=log.get('hardware',''),
+                    app_department=log.get('app_department', ''),
+                    app_name=log.get('app_name', ''),
+                    app_knowledge=log.get('lvl1_lvl2_lvl3', ''),
+                    brand_name=log.get('brand_name', ''),
+                    para_type=log.get('para_type', ''),
+                    hardware=log.get('hardware', ''),
                     quota=log.get('quota', 0),
                     prompt_tokens=log.get('prompt_tokens', 0),
                     completion_tokens=log.get('completion_tokens', 0),
@@ -257,10 +267,10 @@ class APIQuerier:
                 # print(record)
                 records.append(record)
                 # break
-            
+
             logger.info(f"过滤测试数据后剩余 {len(records)} 条记录")
             return records
-            
+
         except requests.exceptions.RequestException as e:
             logger.error(f"API请求失败: {e}")
             return []
@@ -271,11 +281,11 @@ class APIQuerier:
 
 class DatabaseQuerier:
     """数据库查询器（保留作为备选）"""
-    
+
     def __init__(self, db_path: str):
         self.db_path = db_path
         self.conn = None
-    
+
     def connect(self):
         """连接数据库"""
         try:
@@ -286,13 +296,13 @@ class DatabaseQuerier:
         except sqlite3.Error as e:
             logger.error(f"数据库连接失败: {e}")
             return False
-    
+
     def close(self):
         """关闭数据库连接"""
         if self.conn:
             self.conn.close()
             logger.info("数据库连接已关闭")
-    
+
     def get_daily_logs(self, target_date: str) -> List[TokenLogRecord]:
         """
         获取指定日期的日志数据
@@ -302,14 +312,14 @@ class DatabaseQuerier:
         if not self.conn:
             if not self.connect():
                 return []
-        
+
         # 转换日期为时间戳范围
         date_obj = datetime.strptime(target_date, '%Y-%m-%d')
         start_timestamp = int(date_obj.timestamp())
         end_timestamp = int((date_obj + timedelta(days=1)).timestamp())
-        
+
         logger.info(f"查询日期 {target_date} 的数据 (时间戳: {start_timestamp} - {end_timestamp})")
-        
+
         try:
             cursor = self.conn.cursor()
             cursor.execute("""
@@ -321,10 +331,10 @@ class DatabaseQuerier:
                 WHERE created_at >= ? AND created_at < ?
                 ORDER BY created_at
             """, (start_timestamp, end_timestamp))
-            
+
             rows = cursor.fetchall()
             records = []
-            
+
             for row in rows:
                 if '测试失败' in row['content']:
                     continue
@@ -347,14 +357,14 @@ class DatabaseQuerier:
                     system_prompt_reset=bool(row['system_prompt_reset'])
                 )
                 records.append(record)
-            
+
             logger.info(f"查询到 {len(records)} 条记录")
             return records
-            
+
         except sqlite3.Error as e:
             logger.error(f"查询数据失败: {e}")
             return []
-    
+
     def get_logs_by_date_range(self, start_date: str, end_date: str) -> List[TokenLogRecord]:
         """
         获取日期范围内的日志数据
@@ -365,15 +375,15 @@ class DatabaseQuerier:
         if not self.conn:
             if not self.connect():
                 return []
-        
+
         start_obj = datetime.strptime(start_date, '%Y-%m-%d')
         end_obj = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
-        
+
         start_timestamp = int(start_obj.timestamp())
         end_timestamp = int(end_obj.timestamp())
-        
+
         logger.info(f"查询日期范围 {start_date} 至 {end_date} 的数据")
-        
+
         try:
             cursor = self.conn.cursor()
             cursor.execute("""
@@ -385,10 +395,10 @@ class DatabaseQuerier:
                 WHERE created_at >= ? AND created_at < ?
                 ORDER BY created_at
             """, (start_timestamp, end_timestamp))
-            
+
             rows = cursor.fetchall()
             records = []
-            
+
             for row in rows:
                 record = TokenLogRecord(
                     id=row['id'],
@@ -409,10 +419,10 @@ class DatabaseQuerier:
                     system_prompt_reset=bool(row['system_prompt_reset'])
                 )
                 records.append(record)
-            
+
             logger.info(f"查询到 {len(records)} 条记录")
             return records
-            
+
         except sqlite3.Error as e:
             logger.error(f"查询数据失败: {e}")
             return []
@@ -495,6 +505,7 @@ def generate_model_code(model_name: str) -> str:
     # print(f"size is {size}")
     return f"GMGS_{brand}_{int(size)}_000001"
 
+
 # def generate_app_id(app_owner_dep_name):
 #     # knowledge_id=''
 #     if '人力部'== app_owner_dep_name:
@@ -506,12 +517,12 @@ def generate_model_code(model_name: str) -> str:
 #     return f"GMGS_{knowledge_id}_000001"
 def generate_app_id(app_knowledge):
     # knowledge_id=''
-    if app_knowledge in CONFIG.get('app_knowledge',{}).keys():
-        print('图谱数据',app_knowledge)
+    if app_knowledge in CONFIG.get('app_knowledge', {}).keys():
         knowledge_id = CONFIG['app_knowledge'][app_knowledge]
     else:
-        knowledge_id='BGWX0000'
+        knowledge_id = 'BGWX0000'
     return f"GMGS_{knowledge_id}_000001"
+
 
 def generate_app_name(app_owner_dep_name):
     if '人力部' == app_owner_dep_name:
@@ -534,12 +545,12 @@ def transform_record(log_record: TokenLogRecord) -> Dict:
     created_at = log_record.created_at
     # print(type(created_at),created_at)
     date_str = datetime.fromtimestamp(created_at).strftime("%Y%m%d")
-    app_department= log_record.app_department
+    app_department = log_record.app_department
     brand_name = log_record.brand_name
-    hardware =  log_record.hardware.upper()
+    hardware = log_record.hardware.upper()
     app_name = log_record.app_name
     para_type = log_record.para_type
-    app_knowledge =  log_record.app_knowledge
+    app_knowledge = log_record.app_knowledge
     # deploy_id = {}
 
     # app_owner_dep_name = generate_model_app_owner_dep(model_name)
@@ -548,29 +559,30 @@ def transform_record(log_record: TokenLogRecord) -> Dict:
     record = {
         # 'DAY_ID':date_str, # 账期
         'APP_OWNER_ORG': 'GMGS',
-        'APP_OWNER_DEPARTMENT': app_department,   # 人力部
+        'APP_OWNER_DEPARTMENT': app_department,  # 人力部
         'MODEL_DEPLOY_ORG': 'GMGS',
         'MODEL_DEPLOY_DEPARTMENT': '数据分中心',
-        'MODEL_CODE': generate_model_code(model_name),   #GMGS_QWEN_235_00001   模型部署单位标识_模型品牌_模型参数量_序号
+        'MODEL_CODE': generate_model_code(model_name),  # GMGS_QWEN_235_00001   模型部署单位标识_模型品牌_模型参数量_序号
         'MODEL_NAME': generate_model_name_to_id(model_name),  ## 枚举值   qwen-235B-instruct-A22
-        'APP_ID': generate_app_id(app_knowledge),   # GMGS_ZNYY0006_000001      AI应用业务归属单位标识_AI应用图谱编码_序号
-        'APP_NAME': app_name,   # 数字员工 ； 内容部-媒资库  ；
+        'APP_ID': generate_app_id(app_knowledge),  # GMGS_ZNYY0006_000001      AI应用业务归属单位标识_AI应用图谱编码_序号
+        'APP_NAME': app_name,  # 数字员工 ； 内容部-媒资库  ；
         'ITERNAL_APP': '1',
-        'MODEL_BRAND': extract_brand(brand_name),     # 全部大写：QWEN
+        'MODEL_BRAND': extract_brand(brand_name),  # 全部大写：QWEN
         'MODEL_SIZE': int(extract_size(model_name)),  # 模型参数： 235
-        'MODEL_TYPE': '1',   # VL的版本的大模型   ---暂时不明确，直接是1  varchar
+        'MODEL_TYPE': '1',  # VL的版本的大模型   ---暂时不明确，直接是1  varchar
         'QUANT_LEVEL': generate_quant_level(para_type),  # 是指推理的精度 ----闲杂有假设值FP8  int8
-        'HARDWARE_TYPE': hardware, # H800 -
+        'HARDWARE_TYPE': hardware,  # H800 -
         'TOTAL_CALL_COUNT': 1,  # 调用次数  DECIMAL(30)
-        'TOTAL_CALL_SUCCESS_COUNT': 1,   # 调用成功的次数  DECIMAL(30)
-        'INPUT_TOKEN_COUNT': int(prompt_tokens),   # 输入tokens数，    DECIMAL(30)
-        'OUTPUT_TOKEN_COUNT':int(completion_tokens),  # 输出tokens数  DECIMAL(30)
-        'REASONING_TOKEN_COUNT': thinking_tokens,   ## thinking 的tokens数 DECIMAL(30)
-        'TOTAL_TOKEN_COUNT': int(prompt_tokens) + int(completion_tokens) + thinking_tokens,   # 一起的tokens数据
+        'TOTAL_CALL_SUCCESS_COUNT': 1,  # 调用成功的次数  DECIMAL(30)
+        'INPUT_TOKEN_COUNT': int(prompt_tokens),  # 输入tokens数，    DECIMAL(30)
+        'OUTPUT_TOKEN_COUNT': int(completion_tokens),  # 输出tokens数  DECIMAL(30)
+        'REASONING_TOKEN_COUNT': thinking_tokens,  ## thinking 的tokens数 DECIMAL(30)
+        'TOTAL_TOKEN_COUNT': int(prompt_tokens) + int(completion_tokens) + thinking_tokens,  # 一起的tokens数据
         'REMARK': '',
     }
 
     return record
+
 
 def generate_model_app_owner_dep(model_name):
     # if 'VL' in model_name:
@@ -578,19 +590,25 @@ def generate_model_app_owner_dep(model_name):
     # else:
     dep_name = '人力部'
     return dep_name
+
+
 def generate_quant_level(para_type):
-    if para_type in CONFIG.get('quant_level',{}).keys():
+    if para_type in CONFIG.get('quant_level', {}).keys():
         return CONFIG['quant_level'][para_type]
     else:
         return '4'
 
 
 def generate_model_name_to_id(model_name):
+
     model_name = model_name.replace('-INT8', '')
+
     if '/' in model_name:
         model_name = model_name.split('/')[1]
     if model_name in ['Qwen3-VL-235B-A22B-Instruct','Qwen3.5-122B-A10B']:
+
         return model_name
+
     else:
         return 'Qwen3-235B-A22B-Instruct-2507'
 
@@ -604,32 +622,32 @@ def generate_dat_content(records: List[Dict]) -> str:
     # 如果记录为空，返回空内容（不生成任何数据）
     if not records:
         return ''
-    
+
     lines = []
     for record in records:
         # 按协议字段顺序排列 (AIP_MDL_TOKEN_INFO 表结构)
         field_order = [
-            'APP_OWNER_ORG',           # 1. AI应用业务归属单位标识
-            'APP_OWNER_DEPARTMENT',    # 2. AI应用业务归属具体处室/部门
-            'MODEL_DEPLOY_ORG',        # 3. 模型部署单位标识
-            'MODEL_DEPLOY_DEPARTMENT', # 4. 模型部署具体处室/部门
-            'MODEL_CODE',              # 5. 模型编码
-            'MODEL_NAME',              # 6. 模型名称
-            'APP_ID',                  # 7. 应用编码
-            'APP_NAME',                # 8. 应用名称
-            'ITERNAL_APP',             # 9. 是否内部应用
-            'MODEL_BRAND',             # 10. 模型品牌
-            'MODEL_SIZE',              # 11. 模型参数量
-            'MODEL_TYPE',              # 12. 模型类型
-            'QUANT_LEVEL',             # 13. 模型部署精度
-            'HARDWARE_TYPE',           # 14. 部署硬件类型
-            'TOTAL_CALL_COUNT',        # 15. 模型调用次数
-            'TOTAL_CALL_SUCCESS_COUNT',# 16. 模型成功调用次数
-            'INPUT_TOKEN_COUNT',       # 17. 模型输入Tokens消耗
-            'OUTPUT_TOKEN_COUNT',      # 18. 模型输出Tokens消耗
-            'REASONING_TOKEN_COUNT',   # 19. 模型Thinking Tokens消耗
-            'TOTAL_TOKEN_COUNT',       # 20. 模型总Tokens消耗
-            'REMARK',                  # 21. 备注
+            'APP_OWNER_ORG',  # 1. AI应用业务归属单位标识
+            'APP_OWNER_DEPARTMENT',  # 2. AI应用业务归属具体处室/部门
+            'MODEL_DEPLOY_ORG',  # 3. 模型部署单位标识
+            'MODEL_DEPLOY_DEPARTMENT',  # 4. 模型部署具体处室/部门
+            'MODEL_CODE',  # 5. 模型编码
+            'MODEL_NAME',  # 6. 模型名称
+            'APP_ID',  # 7. 应用编码
+            'APP_NAME',  # 8. 应用名称
+            'ITERNAL_APP',  # 9. 是否内部应用
+            'MODEL_BRAND',  # 10. 模型品牌
+            'MODEL_SIZE',  # 11. 模型参数量
+            'MODEL_TYPE',  # 12. 模型类型
+            'QUANT_LEVEL',  # 13. 模型部署精度
+            'HARDWARE_TYPE',  # 14. 部署硬件类型
+            'TOTAL_CALL_COUNT',  # 15. 模型调用次数
+            'TOTAL_CALL_SUCCESS_COUNT',  # 16. 模型成功调用次数
+            'INPUT_TOKEN_COUNT',  # 17. 模型输入Tokens消耗
+            'OUTPUT_TOKEN_COUNT',  # 18. 模型输出Tokens消耗
+            'REASONING_TOKEN_COUNT',  # 19. 模型Thinking Tokens消耗
+            'TOTAL_TOKEN_COUNT',  # 20. 模型总Tokens消耗
+            'REMARK',  # 21. 备注
         ]
 
         # 构建字段值列表
@@ -664,7 +682,7 @@ def generate_filename(data_date: str, process_time: str, seq: str = '0001') -> s
     return filename
 
 
-def generate_val_content(filename: str, record_count: int, file_size: int, 
+def generate_val_content(filename: str, record_count: int, file_size: int,
                          md5_hash: str, data_date: str) -> str:
     """
     生成VAL校验文件内容
@@ -753,7 +771,7 @@ def save_audit_files(records: List[Dict], target_date: str) -> List[str]:
     logger.info(f"  - VAL: {val_path}")
     logger.info(f"  - CHECK: {check_path}")
 
-    return [str(final_dat_gz_path),]
+    return [str(final_dat_gz_path), ]
 
 
 def cleanup_old_files():
@@ -814,7 +832,7 @@ def sync_tokens(target_date: Optional[str] = None) -> bool:
     api = APIQuerier(CONFIG['api_base_url'], CONFIG['api_token'])
     logs = api.get_daily_logs(target_date)
     # print(type(logs),logs[0])
-    
+
     if not logs:
         logger.warning("未获取到任何日志数据，将生成空文件")
 
@@ -864,19 +882,19 @@ def main():
     )
 
     args = parser.parse_args()
-    
+
     # 更新API配置
     if args.api_url:
         CONFIG['api_base_url'] = args.api_url
     if args.api_token:
         CONFIG['api_token'] = args.api_token
-    
+
     # 批量同步模式
     if args.start_date and args.end_date:
         logger.info(f"批量同步模式: {args.start_date} 至 {args.end_date}")
         current_date = datetime.strptime(args.start_date, '%Y-%m-%d')
         end_date = datetime.strptime(args.end_date, '%Y-%m-%d')
-        
+
         while current_date <= end_date:
             date_str = current_date.strftime('%Y-%m-%d')
             sync_tokens(date_str)
